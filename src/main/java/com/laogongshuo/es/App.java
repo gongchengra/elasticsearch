@@ -5,21 +5,29 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
+import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 
 public class App {
 
@@ -133,11 +141,100 @@ public class App {
     }
   }
 
+  public static void get() throws IOException {
+    GetRequest getRequest = new GetRequest("bank", "1000");
+    GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+    String index = getResponse.getIndex();
+    String id = getResponse.getId();
+    if (getResponse.isExists()) {
+      long version = getResponse.getVersion();
+      System.out.println(version);
+      String sourceAsString = getResponse.getSourceAsString();
+      System.out.println(sourceAsString);
+      Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
+      System.out.println(sourceAsMap);
+      byte[] sourceAsBytes = getResponse.getSourceAsBytes();
+      String result = new String(sourceAsBytes);
+      System.out.println(result);
+    } else {
+      System.out.println("not exist");
+    }
+  }
+
+  public static void exist() throws IOException {
+    GetRequest getRequest = new GetRequest("bank", "2000");
+    getRequest.fetchSourceContext(new FetchSourceContext(false));
+    getRequest.storedFields("_none_");
+    boolean exists = client.exists(getRequest, RequestOptions.DEFAULT);
+    System.out.println(exists);
+  }
+
+  public static void delete() throws IOException {
+    DeleteRequest request = new DeleteRequest("bank", "1000");
+    DeleteResponse deleteResponse = client.delete(request, RequestOptions.DEFAULT);
+    String index = deleteResponse.getIndex();
+    System.out.println(index);
+    String id = deleteResponse.getId();
+    System.out.println(id);
+    long version = deleteResponse.getVersion();
+    System.out.println(version);
+    ReplicationResponse.ShardInfo shardInfo = deleteResponse.getShardInfo();
+    if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
+      System.out.println("some thing wrong");
+    }
+    if (shardInfo.getFailed() > 0) {
+      for (ReplicationResponse.ShardInfo.Failure failure : shardInfo.getFailures()) {
+        String reason = failure.reason();
+        System.out.println(reason);
+      }
+    }
+  }
+
+  public static void update() throws IOException {
+
+    Map<String, Object> jsonMap = new HashMap<>();
+    jsonMap.put("balance", "89999");
+    jsonMap.put("city", "Shanghai");
+    UpdateRequest request = new UpdateRequest("bank", "1000").doc(jsonMap);
+    UpdateResponse updateResponse = client.update(request, RequestOptions.DEFAULT);
+    String index = updateResponse.getIndex();
+    System.out.println(index);
+    String id = updateResponse.getId();
+    System.out.println(id);
+    long version = updateResponse.getVersion();
+    System.out.println(version);
+    if (updateResponse.getResult() == DocWriteResponse.Result.CREATED) {
+      System.out.println("created");
+    } else if (updateResponse.getResult() == DocWriteResponse.Result.UPDATED) {
+      System.out.println("updated");
+    } else if (updateResponse.getResult() == DocWriteResponse.Result.DELETED) {
+      System.out.println("deleted");
+    } else if (updateResponse.getResult() == DocWriteResponse.Result.NOOP) {
+      System.out.println("noop");
+    }
+    GetResult result = updateResponse.getGetResult();
+    if (result != null && result.isExists()) {
+      String sourceAsString = result.sourceAsString();
+      System.out.println(sourceAsString);
+      Map<String, Object> sourceAsMap = result.sourceAsMap();
+      System.out.println(sourceAsMap);
+      byte[] sourceAsBytes = result.source();
+      String source = new String(sourceAsBytes);
+      System.out.println(source);
+    } else {
+      System.out.println("not exist");
+    }
+  }
+
   public static void main(String[] args) throws IOException {
-    matchAll();
-    search();
-    count();
+    //    matchAll();
+    //    search();
+    //    count();
     index();
+    //    get();
+    //      exist();
+    //    delete();
+    update();
     client.close();
   }
 }
