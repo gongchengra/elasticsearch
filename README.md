@@ -130,4 +130,30 @@ mvn exec:java -Dexec.mainClass="com.laogongshuo.es.App"
 ```
 因为没有在pom.xml里面写执行的mainClass，所以只能这么跑，不过能看到结果就行了。
 
+后续：
+在pom.xml中加上下面一段:
+```
+<build>
+	<plugins>
+		<plugin>
+			<artifactId>maven-assembly-plugin</artifactId>
+			<configuration>
+				<archive>
+					<manifest>
+						<mainClass>com.laogongshuo.es.App</mainClass>
+					</manifest>
+				</archive>
+				<descriptorRefs>
+					<descriptorRef>jar-with-dependencies</descriptorRef>
+				</descriptorRefs>
+			</configuration>
+		</plugin>
+	</plugins>
+</build>
+```
+然后就可以java -jar运行了。
+```
+mvn clean compile assembly:single
+java -jar target/elasticsearch-1.0-SNAPSHOT-jar-with-dependencies.jar
+```
 文中全部代码都在这里，[github](https://github.com/gongchengra/elasticsearch), 欢迎star.
