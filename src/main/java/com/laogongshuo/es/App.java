@@ -5,12 +5,16 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -22,6 +26,8 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
+import org.elasticsearch.client.core.MainResponse;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
@@ -226,15 +232,78 @@ public class App {
     }
   }
 
+  public static void bulk() throws IOException {
+    BulkRequest request = new BulkRequest();
+    request.add(new IndexRequest("posts").id("1").source(XContentType.JSON, "field", "foo"));
+    request.add(new IndexRequest("posts").id("2").source(XContentType.JSON, "field", "bar"));
+    request.add(new IndexRequest("posts").id("3").source(XContentType.JSON, "field", "baz"));
+    request.add(new DeleteRequest("posts", "3"));
+    request.add(new UpdateRequest("posts", "2").doc(XContentType.JSON, "other", "test"));
+    request.add(new IndexRequest("posts").id("4").source(XContentType.JSON, "field", "baz"));
+    request.add(new DeleteRequest("posts", "4"));
+    request.add(new DeleteRequest("posts", "2"));
+    request.add(new DeleteRequest("posts", "1"));
+    BulkResponse bulkResponse = client.bulk(request, RequestOptions.DEFAULT);
+    for (BulkItemResponse bulkItemResponse : bulkResponse) {
+      DocWriteResponse itemResponse = bulkItemResponse.getResponse();
+      switch (bulkItemResponse.getOpType()) {
+        case INDEX:
+        case CREATE:
+          IndexResponse indexResponse = (IndexResponse) itemResponse;
+          String index = indexResponse.getIndex();
+          System.out.println(index);
+          break;
+        case UPDATE:
+          UpdateResponse updateResponse = (UpdateResponse) itemResponse;
+          String id = updateResponse.getId();
+          System.out.println(id);
+          break;
+        case DELETE:
+          DeleteResponse deleteResponse = (DeleteResponse) itemResponse;
+          String id1 = deleteResponse.getId();
+          System.out.println(id1);
+      }
+    }
+  }
+
+  public static void info() throws IOException {
+    MainResponse response = client.info(RequestOptions.DEFAULT);
+    String clusterName = response.getClusterName();
+    System.out.println(clusterName);
+    String clusterUuid = response.getClusterUuid();
+    System.out.println(clusterUuid);
+    String nodeName = response.getNodeName();
+    System.out.println(nodeName);
+    MainResponse.Version version = response.getVersion();
+    String buildDate = version.getBuildDate();
+    System.out.println(buildDate);
+    String buildFlavor = version.getBuildFlavor();
+    System.out.println(buildFlavor);
+    String buildHash = version.getBuildHash();
+    System.out.println(buildHash);
+    String buildType = version.getBuildType();
+    System.out.println(buildType);
+    String luceneVersion = version.getLuceneVersion();
+    System.out.println(luceneVersion);
+    String minimumIndexCompatibilityVersion = version.getMinimumIndexCompatibilityVersion();
+    System.out.println(minimumIndexCompatibilityVersion);
+    String minimumWireCompatibilityVersion = version.getMinimumWireCompatibilityVersion();
+    System.out.println(minimumWireCompatibilityVersion);
+    String number = version.getNumber();
+    System.out.println(number);
+  }
+
   public static void main(String[] args) throws IOException {
     //    matchAll();
     //    search();
     //    count();
-    index();
+    //    index();
     //    get();
     //      exist();
     //    delete();
-    update();
+    //    update();
+    //    bulk();
+    info();
     client.close();
   }
 }
