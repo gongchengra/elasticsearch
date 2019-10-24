@@ -151,7 +151,9 @@ public class App {
     GetRequest getRequest = new GetRequest("bank", "1000");
     GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
     String index = getResponse.getIndex();
+    System.out.println(index);
     String id = getResponse.getId();
+    System.out.println(id);
     if (getResponse.isExists()) {
       long version = getResponse.getVersion();
       System.out.println(version);
