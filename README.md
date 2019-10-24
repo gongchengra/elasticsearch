@@ -156,4 +156,19 @@ mvn exec:java -Dexec.mainClass="com.laogongshuo.es.App"
 mvn clean compile assembly:single
 java -jar target/elasticsearch-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
+在match_all后面我用调用一些其它代码：
+```
+    matchAll();
+    search();
+    count();
+    index();
+    get();
+    exist();
+    delete();
+    update();
+    bulk();
+    info();
+```
+这些代码都是根据官方的api, [https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-query-builders.html](https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-high-query-builders.html)来实现的，没有什么难度，有需要调用其它方法，直接参考官方api就可以了。
+
 文中全部代码都在这里，[github](https://github.com/gongchengra/elasticsearch), 欢迎star.

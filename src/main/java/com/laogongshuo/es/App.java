@@ -294,15 +294,15 @@ public class App {
   }
 
   public static void main(String[] args) throws IOException {
-    //    matchAll();
-    //    search();
-    //    count();
-    //    index();
-    //    get();
-    //      exist();
-    //    delete();
-    //    update();
-    //    bulk();
+    matchAll();
+    search();
+    count();
+    index();
+    get();
+    exist();
+    delete();
+    update();
+    bulk();
     info();
     client.close();
   }
